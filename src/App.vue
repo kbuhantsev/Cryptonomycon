@@ -17,29 +17,18 @@
               Тикер
             </label>
             <div class="mt-1 relative rounded-md shadow-md">
-              <input v-model="ticker" v-on:keydown.enter="add" type="text" name="wallet" id="wallet"
+              <input v-model="ticker" v-on:keydown.enter="add(undefined)" @input="handleTickerInput" type="text"
+                name="wallet" id="wallet"
                 class="block w-full pr-10 border-gray-300 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md"
                 placeholder="Например DOGE" />
             </div>
-            <!-- <div class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap">
-              <span
+            <div v-for="coin in helpTickers" :key="coin.Id" class="flex bg-white p-1 rounded-md shadow-md flex-wrap">
+              <span @:click="handleHelpTickerClick(coin)"
                 class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
-                BTC
+                {{ coin.Symbol }}
               </span>
-              <span
-                class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
-                DOGE
-              </span>
-              <span
-                class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
-                BCH
-              </span>
-              <span
-                class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
-                CHD
-              </span>
-            </div> -->
-            <!-- <div class="text-sm text-red-600">Такой тикер уже добавлен</div> -->
+            </div>
+            <div :class="{ invisible: !helpTickersError }" class="text-sm text-red-600">Такой тикер уже добавлен</div>
           </div>
         </div>
         <button @click="add()" type="button"
@@ -111,14 +100,26 @@ export default {
       ticker: '',
       tickers: [],
       sel: null,
-      graph: []
+      graph: [],
+      coins: [],
+      helpTickers: [],
+      helpTickersError: false
     }
   },
 
+  mounted() {
+    const getCoins = async () => {
+      const resp = await fetch("https://min-api.cryptocompare.com/data/all/coinlist?summary=true");
+      const result = await resp.json();
+      this.coins = Object.values(result.Data);
+    }
+    getCoins()
+  },
+
   methods: {
-    add() {
+    add(title) {
       const currentTicker = {
-        name: this.ticker,
+        name: title ? title : this.ticker,
         price: "-",
         intervalId: null
       };
@@ -134,7 +135,8 @@ export default {
           this.graph.push(data.USD)
         }
       }, 3000)
-
+      this.ticker = ""
+      this.helpTickers = []
     },
 
     handleDelete(tickerToRemove) {
@@ -153,6 +155,27 @@ export default {
     select(item) {
       this.sel = item
       this.graph = []
+    },
+
+    handleTickerInput(event) {
+      this.helpTickersError = false;
+      const inputData = event.target.value.toLowerCase();
+      if (inputData.length === 0) {
+        this.helpTickers = []
+        return
+      }
+      const values = this.coins.filter(obj => obj.Symbol.toLowerCase().includes(inputData))
+      this.helpTickers = values.slice(0, 4)
+
+    },
+
+    handleHelpTickerClick(coin) {
+      const ticker = this.tickers.find(value => value.name.toLowerCase() === coin.Symbol.toLowerCase())
+      if (ticker) {
+        this.helpTickersError = true;
+      } else {
+        this.add(coin.Symbol)
+      }
     }
 
   }
