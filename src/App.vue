@@ -57,7 +57,7 @@
         <hr class="w-full border-t border-gray-600 my-4" />
         <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
           <div v-for="item in paginatedTickers" v-bind:key=item @click="select(item)"
-            :class="{ 'border-2': sel === item }"
+            :class="{ 'border-2': selectedTicker === item }"
             class="bg-white overflow-hidden shadow rounded-lg border-purple-800 border-solid cursor-pointer">
             <div class="px-4 py-5 sm:p-6 text-center">
               <dt class="text-sm font-medium text-gray-500 truncate">{{ item.name }}-USD</dt>
@@ -78,14 +78,14 @@
         </dl>
 
         <hr class="w-full border-t border-gray-600 my-4" />
-        <section v-if="sel" class="relative">
-          <h3 class="text-lg leading-6 font-medium text-gray-900 my-8">{{ sel.name }} - USD</h3>
+        <section v-if="selectedTicker" class="relative">
+          <h3 class="text-lg leading-6 font-medium text-gray-900 my-8">{{ selectedTicker.name }} - USD</h3>
           <div class="flex items-end border-gray-600 border-b border-l h-64">
             <div v-for="(bar, idx) in normalizedGraph" :key="idx" :style="{ height: `${bar}%` }"
               class="bg-purple-800 border w-10">
             </div>
           </div>
-          <button @click="sel = null" type="button" class="absolute top-0 right-0">
+          <button @click="selectedTicker = null" type="button" class="absolute top-0 right-0">
             <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" x="0" y="0" viewBox="0 0 511.76 511.76"
               xml:space="preserve">
               <g>
@@ -111,7 +111,7 @@ export default {
       filter: "",
 
       tickers: [],
-      sel: null,
+      selectedTicker: null,
 
       graph: [],
 
@@ -120,7 +120,6 @@ export default {
       helpTickersError: false,
 
       page: 1,
-      // hasNextPage: true
     }
   },
 
@@ -176,10 +175,22 @@ export default {
     normalizedGraph() {
       const maxValue = Math.max(...this.graph)
       const minValue = Math.min(...this.graph)
+
+      if (maxValue === minValue) {
+        return this.graph.map(() => 50)
+      }
+
       return this.graph.map(
         price => 5 + ((price - minValue) * 95 / (maxValue - minValue)
         ))
     },
+
+    pageStateOptions() {
+      return {
+        filter: this.filter,
+        page: this.page
+      }
+    }
 
   },
 
@@ -194,7 +205,7 @@ export default {
           const price = data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2)
           const ticker = this.tickers.find(t => t.name === tickerName)
           ticker.price = price
-          if (this.sel?.name === tickerName) {
+          if (this.selectedTicker?.name === tickerName) {
             this.graph.push(data.USD)
           }
         }
@@ -205,7 +216,6 @@ export default {
     },
 
     add(title) {
-
       const currentTicker = {
         name: title ? title : this.ticker,
         price: "-",
@@ -221,27 +231,24 @@ export default {
       }
 
       currentTicker.intervalId = this.subscribeToUpdate(currentTicker.name)
-      this.tickers.push(currentTicker)
-
-      localStorage.setItem("cryptonomicon_list", JSON.stringify(this.tickers))
+      this.tickers = [...this.tickers, currentTicker]
 
       this.ticker = ""
       this.helpTickers = []
       this.filter = ""
-
     },
 
     handleDelete(tickerToRemove) {
       clearInterval(tickerToRemove.intervalId)
       this.tickers = this.tickers.filter(t => t !== tickerToRemove)
-      localStorage.setItem("cryptonomicon_list", JSON.stringify(this.tickers))
+      if (this.selectedTicker === tickerToRemove) {
+        this.selectedTicker = null
+      }
     },
 
-
-
     select(item) {
-      this.sel = item
-      this.graph = []
+      this.selectedTicker = item
+
     },
 
     handleTickerInput(event) {
@@ -268,13 +275,32 @@ export default {
   },
 
   watch: {
+
+    tickers() {
+      localStorage.setItem("cryptonomicon_list", JSON.stringify(this.tickers))
+    },
+
+    selectedTicker() {
+      this.graph = []
+    },
+
+    paginatedTickers() {
+      if (this.paginatedTickers.length === 0 && this.page > 1) {
+        this.page -= 1
+      }
+    },
+
     filter() {
       this.page = 1
-      window.history.pushState(null, document.title, `${window.location.pathname}?filter=${this.filter}&page=${this.page}`)
     },
-    page() {
-      window.history.pushState(null, document.title, `${window.location.pathname}?filter=${this.filter}&page=${this.page}`)
-    }
+
+    pageStateOptions(value) {
+      window.history.pushState(
+        null,
+        document.title,
+        `${window.location.pathname}?filter=${value.filter}&page=${value.page}`)
+    },
+
   }
 
 }
