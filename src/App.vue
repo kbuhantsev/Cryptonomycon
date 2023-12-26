@@ -46,7 +46,7 @@
 
       <template v-if="tickers.length">
         <div class="max-w-xs">Фильтр:
-          <input v-model="filter"
+          <input v-model="filter" @input="page = 1"
             class="block w-full pr-10 border-gray-300 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md"
             type="text">
           <button @click="page -= 1" v-if="page > 1"
@@ -56,7 +56,7 @@
         </div>
         <hr class="w-full border-t border-gray-600 my-4" />
         <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
-          <div v-for="item in filteredTickers()" v-bind:key=item @click="select(item)"
+          <div v-for="item in paginatedTickers" v-bind:key=item @click="select(item)"
             :class="{ 'border-2': sel === item }"
             class="bg-white overflow-hidden shadow rounded-lg border-purple-800 border-solid cursor-pointer">
             <div class="px-4 py-5 sm:p-6 text-center">
@@ -81,7 +81,7 @@
         <section v-if="sel" class="relative">
           <h3 class="text-lg leading-6 font-medium text-gray-900 my-8">{{ sel.name }} - USD</h3>
           <div class="flex items-end border-gray-600 border-b border-l h-64">
-            <div v-for="(bar, idx) in normalizeGraph()" :key="idx" :style="{ height: `${bar}%` }"
+            <div v-for="(bar, idx) in normalizedGraph" :key="idx" :style="{ height: `${bar}%` }"
               class="bg-purple-800 border w-10">
             </div>
           </div>
@@ -108,15 +108,19 @@ export default {
   data() {
     return {
       ticker: '',
+      filter: "",
+
       tickers: [],
       sel: null,
+
       graph: [],
+
       coins: [],
       helpTickers: [],
       helpTickersError: false,
+
       page: 1,
-      filter: "",
-      hasNextPage: true
+      // hasNextPage: true
     }
   },
 
@@ -147,15 +151,39 @@ export default {
     }
   },
 
-  methods: {
+  computed: {
+
+    startIndex() {
+      return (this.page - 1) * 6
+    },
+
+    endIndex() {
+      return this.page * 6
+    },
 
     filteredTickers() {
-      const start = (this.page - 1) * 6
-      const end = this.page * 6
-      const filteredTickers = this.tickers.filter(ticker => ticker.name.toLowerCase().includes(this.filter.toLowerCase()))
-      this.hasNextPage = filteredTickers.length > end
-      return filteredTickers.slice(start, end)
+      return this.tickers.filter(ticker => ticker.name.toLowerCase().includes(this.filter.toLowerCase()))
     },
+
+    paginatedTickers() {
+      return this.filteredTickers.slice(this.startIndex, this.endIndex)
+    },
+
+    hasNextPage() {
+      return this.filteredTickers.length > this.endIndex
+    },
+
+    normalizedGraph() {
+      const maxValue = Math.max(...this.graph)
+      const minValue = Math.min(...this.graph)
+      return this.graph.map(
+        price => 5 + ((price - minValue) * 95 / (maxValue - minValue)
+        ))
+    },
+
+  },
+
+  methods: {
 
     subscribeToUpdate(tickerName) {
 
@@ -209,13 +237,7 @@ export default {
       localStorage.setItem("cryptonomicon_list", JSON.stringify(this.tickers))
     },
 
-    normalizeGraph() {
-      const maxValue = Math.max(...this.graph)
-      const minValue = Math.min(...this.graph)
-      return this.graph.map(
-        price => 5 + ((price - minValue) * 95 / (maxValue - minValue)
-        ))
-    },
+
 
     select(item) {
       this.sel = item
