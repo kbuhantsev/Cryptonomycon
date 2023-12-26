@@ -102,13 +102,16 @@
 </template>
 
 <script>
+
+import { loadTicker } from "./api"
+
 export default {
   name: "App",
 
   data() {
     return {
       ticker: '',
-      filter: "",
+      filter: '',
 
       tickers: [],
       selectedTicker: null,
@@ -144,10 +147,10 @@ export default {
     const tickersData = localStorage.getItem("cryptonomicon_list")
     if (tickersData) {
       this.tickers = JSON.parse(tickersData)
-      this.tickers.forEach(ticker => {
-        this.subscribeToUpdate(ticker.name)
-      })
     }
+
+    setInterval(this.updateTickers, 5000)
+
   },
 
   computed: {
@@ -196,22 +199,22 @@ export default {
 
   methods: {
 
-    subscribeToUpdate(tickerName) {
-
-      const intervalId = setInterval(async () => {
-        const f = await fetch(`https://min-api.cryptocompare.com/data/price?fsym=${tickerName}&tsyms=USD&api_key=1d68e619b5bfcbe62eccb05a765d39972fa55fffdb2b47ca8b6183aed20fe071`)
-        const data = await f.json()
-        if (!data?.Response === "Error") {
-          const price = data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2)
-          const ticker = this.tickers.find(t => t.name === tickerName)
-          ticker.price = price
-          if (this.selectedTicker?.name === tickerName) {
-            this.graph.push(data.USD)
-          }
+    async updateTickers() {
+      if (!this.tickers.length === 0) {
+        return
+      }
+      const exchangeData = await loadTicker(this.tickers.map(t => t.name))
+      this.tickers.forEach(ticker => {
+        const price = exchangeData[ticker.name.toUpperCase()]
+        if (!price) {
+          ticker.price = "-"
+          return
         }
-      }, 3000)
 
-      return intervalId
+        const normalizedPrice = 1 / price
+        const formattedPrice = normalizedPrice > 1 ? normalizedPrice.toFixed(2) : normalizedPrice.toPrecision(2)
+        ticker.price = formattedPrice
+      })
 
     },
 
@@ -230,7 +233,6 @@ export default {
         return
       }
 
-      currentTicker.intervalId = this.subscribeToUpdate(currentTicker.name)
       this.tickers = [...this.tickers, currentTicker]
 
       this.ticker = ""
