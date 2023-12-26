@@ -61,7 +61,7 @@
             class="bg-white overflow-hidden shadow rounded-lg border-purple-800 border-solid cursor-pointer">
             <div class="px-4 py-5 sm:p-6 text-center">
               <dt class="text-sm font-medium text-gray-500 truncate">{{ item.name }}-USD</dt>
-              <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ item.price }}</dd>
+              <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ formatPrice(item.price) }}</dd>
             </div>
             <div class="w-full border-t border-gray-200"></div>
             <button @click.stop="handleDelete(item)"
@@ -103,7 +103,7 @@
 
 <script>
 
-import { loadTicker } from "./api"
+import { loadTickers } from "./api"
 
 export default {
   name: "App",
@@ -199,21 +199,22 @@ export default {
 
   methods: {
 
+    formatPrice(price) {
+      return price > 1 ? price.toFixed(2) : price.toPrecision(2)
+    },
+
     async updateTickers() {
       if (!this.tickers.length === 0) {
         return
       }
-      const exchangeData = await loadTicker(this.tickers.map(t => t.name))
+      const exchangeData = await loadTickers(this.tickers.map(t => t.name))
       this.tickers.forEach(ticker => {
         const price = exchangeData[ticker.name.toUpperCase()]
         if (!price) {
           ticker.price = "-"
           return
         }
-
-        const normalizedPrice = 1 / price
-        const formattedPrice = normalizedPrice > 1 ? normalizedPrice.toFixed(2) : normalizedPrice.toPrecision(2)
-        ticker.price = formattedPrice
+        ticker.price = this.formatPrice(price)
       })
 
     },
