@@ -276,6 +276,9 @@ export default {
           if (t === this.selectedTicker) {
             this.graph.push(price)
           }
+          if (this.graph.length > 50) {
+            this.graph.shift()
+          }
           t.price = this.formatPrice(price)
         })
     },
