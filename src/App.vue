@@ -13,9 +13,7 @@
       <section>
         <div class="flex">
           <div class="max-w-xs">
-            <label for="wallet" class="block text-sm font-medium text-gray-700">
-              Тикер
-            </label>
+            <label for="wallet" class="block text-sm font-medium text-gray-700"> Тикер </label>
             <div class="mt-1 relative rounded-md shadow-md">
               <input v-model="ticker" v-on:keydown.enter="add(undefined)" @input="handleTickerInput" type="text"
                 name="wallet" id="wallet"
@@ -28,7 +26,9 @@
                 {{ coin.Symbol }}
               </span>
             </div>
-            <div :class="{ invisible: !helpTickersError }" class="text-sm text-red-600">Такой тикер уже добавлен</div>
+            <div :class="{ invisible: !helpTickersError }" class="text-sm text-red-600">
+              Такой тикер уже добавлен
+            </div>
           </div>
         </div>
         <button @click="add()" type="button"
@@ -45,23 +45,28 @@
       </section>
 
       <template v-if="tickers.length">
-        <div class="max-w-xs">Фильтр:
+        <div class="max-w-xs">
+          Фильтр:
           <input v-model="filter" @input="page = 1"
             class="block w-full pr-10 border-gray-300 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md"
-            type="text">
+            type="text" />
           <button @click="page -= 1" v-if="page > 1"
-            class="my-4 mx-2 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">Назад</button>
+            class="my-4 mx-2 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+            Назад
+          </button>
           <button @click="page += 1" v-if="hasNextPage"
-            class="my-4 mx-2 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">Вперед</button>
+            class="my-4 mx-2 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+            Вперед
+          </button>
         </div>
         <hr class="w-full border-t border-gray-600 my-4" />
         <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
-          <div v-for="item in paginatedTickers" v-bind:key=item @click="select(item)"
+          <div v-for="item in paginatedTickers" v-bind:key="item" @click="select(item)"
             :class="{ 'border-2': selectedTicker === item }"
             class="bg-white overflow-hidden shadow rounded-lg border-purple-800 border-solid cursor-pointer">
             <div class="px-4 py-5 sm:p-6 text-center">
               <dt class="text-sm font-medium text-gray-500 truncate">{{ item.name }}-USD</dt>
-              <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ formatPrice(item.price) }}</dd>
+              <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ item.price }}</dd>
             </div>
             <div class="w-full border-t border-gray-200"></div>
             <button @click.stop="handleDelete(item)"
@@ -79,11 +84,12 @@
 
         <hr class="w-full border-t border-gray-600 my-4" />
         <section v-if="selectedTicker" class="relative">
-          <h3 class="text-lg leading-6 font-medium text-gray-900 my-8">{{ selectedTicker.name }} - USD</h3>
+          <h3 class="text-lg leading-6 font-medium text-gray-900 my-8">
+            {{ selectedTicker.name }} - USD
+          </h3>
           <div class="flex items-end border-gray-600 border-b border-l h-64">
             <div v-for="(bar, idx) in normalizedGraph" :key="idx" :style="{ height: `${bar}%` }"
-              class="bg-purple-800 border w-10">
-            </div>
+              class="bg-purple-800 border w-10"></div>
           </div>
           <button @click="selectedTicker = null" type="button" class="absolute top-0 right-0">
             <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" x="0" y="0" viewBox="0 0 511.76 511.76"
@@ -102,11 +108,10 @@
 </template>
 
 <script>
-
-import { loadTickers } from "./api"
+import { loadTickers } from './api'
 
 export default {
-  name: "App",
+  name: 'App',
 
   data() {
     return {
@@ -122,13 +127,13 @@ export default {
       helpTickers: [],
       helpTickersError: false,
 
-      page: 1,
+      page: 1
     }
   },
 
   mounted() {
     const getCoins = async () => {
-      const resp = await fetch("https://min-api.cryptocompare.com/data/all/coinlist?summary=true")
+      const resp = await fetch('https://min-api.cryptocompare.com/data/all/coinlist?summary=true')
       const result = await resp.json()
       this.coins = Object.values(result.Data)
     }
@@ -144,17 +149,15 @@ export default {
       this.page = windowData.page
     }
 
-    const tickersData = localStorage.getItem("cryptonomicon_list")
+    const tickersData = localStorage.getItem('cryptonomicon_list')
     if (tickersData) {
       this.tickers = JSON.parse(tickersData)
     }
 
     setInterval(this.updateTickers, 5000)
-
   },
 
   computed: {
-
     startIndex() {
       return (this.page - 1) * 6
     },
@@ -164,7 +167,9 @@ export default {
     },
 
     filteredTickers() {
-      return this.tickers.filter(ticker => ticker.name.toLowerCase().includes(this.filter.toLowerCase()))
+      return this.tickers.filter((ticker) =>
+        ticker.name.toLowerCase().includes(this.filter.toLowerCase())
+      )
     },
 
     paginatedTickers() {
@@ -183,9 +188,7 @@ export default {
         return this.graph.map(() => 50)
       }
 
-      return this.graph.map(
-        price => 5 + ((price - minValue) * 95 / (maxValue - minValue)
-        ))
+      return this.graph.map((price) => 5 + ((price - minValue) * 95) / (maxValue - minValue))
     },
 
     pageStateOptions() {
@@ -194,11 +197,9 @@ export default {
         page: this.page
       }
     }
-
   },
 
   methods: {
-
     formatPrice(price) {
       return price > 1 ? price.toFixed(2) : price.toPrecision(2)
     },
@@ -207,43 +208,42 @@ export default {
       if (!this.tickers.length === 0) {
         return
       }
-      const exchangeData = await loadTickers(this.tickers.map(t => t.name))
-      this.tickers.forEach(ticker => {
+      const exchangeData = await loadTickers(this.tickers.map((t) => t.name))
+      this.tickers.forEach((ticker) => {
         const price = exchangeData[ticker.name.toUpperCase()]
         if (!price) {
-          ticker.price = "-"
+          ticker.price = '-'
           return
         }
         ticker.price = this.formatPrice(price)
       })
-
     },
 
     add(title) {
       const currentTicker = {
         name: title ? title : this.ticker,
-        price: "-",
+        price: '-',
         intervalId: null
       }
 
-      const founded = this.coins.find(coin => {
+      const founded = this.coins.find((coin) => {
         return coin.Symbol.toLowerCase() === currentTicker.name.toLowerCase()
       })
       if (!founded) {
-        alert("No such coin!")
+        alert('No such coin!')
         return
       }
 
       this.tickers = [...this.tickers, currentTicker]
 
-      this.ticker = ""
+      this.ticker = ''
       this.helpTickers = []
-      this.filter = ""
+      this.filter = ''
     },
 
     handleDelete(tickerToRemove) {
       clearInterval(tickerToRemove.intervalId)
-      this.tickers = this.tickers.filter(t => t !== tickerToRemove)
+      this.tickers = this.tickers.filter((t) => t !== tickerToRemove)
       if (this.selectedTicker === tickerToRemove) {
         this.selectedTicker = null
       }
@@ -251,36 +251,34 @@ export default {
 
     select(item) {
       this.selectedTicker = item
-
     },
 
     handleTickerInput(event) {
-      this.helpTickersError = false;
+      this.helpTickersError = false
       const inputData = event.target.value.toLowerCase()
       if (inputData.length === 0) {
         this.helpTickers = []
         return
       }
-      const values = this.coins.filter(obj => obj.Symbol.toLowerCase().includes(inputData))
+      const values = this.coins.filter((obj) => obj.Symbol.toLowerCase().includes(inputData))
       this.helpTickers = values.slice(0, 4)
-
     },
 
     handleHelpTickerClick(coin) {
-      const ticker = this.tickers.find(value => value.name.toLowerCase() === coin.Symbol.toLowerCase())
+      const ticker = this.tickers.find(
+        (value) => value.name.toLowerCase() === coin.Symbol.toLowerCase()
+      )
       if (ticker) {
         this.helpTickersError = true
       } else {
         this.add(coin.Symbol)
       }
-    },
-
+    }
   },
 
   watch: {
-
     tickers() {
-      localStorage.setItem("cryptonomicon_list", JSON.stringify(this.tickers))
+      localStorage.setItem('cryptonomicon_list', JSON.stringify(this.tickers))
     },
 
     selectedTicker() {
@@ -301,15 +299,13 @@ export default {
       window.history.pushState(
         null,
         document.title,
-        `${window.location.pathname}?filter=${value.filter}&page=${value.page}`)
-    },
-
+        `${window.location.pathname}?filter=${value.filter}&page=${value.page}`
+      )
+    }
   }
-
 }
 </script>
 
 <style src="./app.css"></style>
-
 
 <!--1d68e619b5bfcbe62eccb05a765d39972fa55fffdb2b47ca8b6183aed20fe071-->
