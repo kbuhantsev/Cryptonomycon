@@ -82,8 +82,8 @@
             Назад
           </button>
           <button
-            @click="page += 1"
             v-if="hasNextPage"
+            @click="page += 1"
             class="my-4 mx-2 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
           >
             Вперед
@@ -164,7 +164,7 @@
 </template>
 
 <script>
-import { loadTickers } from './api'
+import { subscribeToTicker, unsubscribeFromTicker } from './api'
 
 export default {
   name: 'App',
@@ -198,16 +198,22 @@ export default {
 
   created() {
     const windowData = Object.fromEntries(new URL(window.location).searchParams.entries())
-    if (windowData.filter) {
-      this.filter = windowData.filter
-    }
-    if (windowData.page) {
-      this.page = windowData.page
-    }
 
-    const tickersData = localStorage.getItem('cryptonomicon_list')
+    const VALID_KEYS = ['filter', 'page']
+
+    VALID_KEYS.forEach((key) => {
+      if (windowData[key]) {
+        this[key] = windowData[key]
+      }
+    })
+
+    const tickersData = localStorage.getItem('cryptonomicon-list')
+
     if (tickersData) {
       this.tickers = JSON.parse(tickersData)
+      this.tickers.forEach((ticker) => {
+        subscribeToTicker(ticker.name, (newPrice) => this.updateTicker(ticker.name, newPrice))
+      })
     }
 
     setInterval(this.updateTickers, 5000)
@@ -257,22 +263,21 @@ export default {
 
   methods: {
     formatPrice(price) {
+      if (price === '-') {
+        return price
+      }
       return price > 1 ? price.toFixed(2) : price.toPrecision(2)
     },
 
-    async updateTickers() {
-      if (!this.tickers.length === 0) {
-        return
-      }
-      const exchangeData = await loadTickers(this.tickers.map((t) => t.name))
-      this.tickers.forEach((ticker) => {
-        const price = exchangeData[ticker.name.toUpperCase()]
-        if (!price) {
-          ticker.price = '-'
-          return
-        }
-        ticker.price = this.formatPrice(price)
-      })
+    updateTicker(tickerName, price) {
+      this.tickers
+        .filter((t) => t.name === tickerName)
+        .forEach((t) => {
+          if (t === this.selectedTicker) {
+            this.graph.push(price)
+          }
+          t.price = this.formatPrice(price)
+        })
     },
 
     add(title) {
@@ -291,22 +296,24 @@ export default {
       }
 
       this.tickers = [...this.tickers, currentTicker]
-
       this.ticker = ''
-      this.helpTickers = []
       this.filter = ''
-    },
-
-    handleDelete(tickerToRemove) {
-      clearInterval(tickerToRemove.intervalId)
-      this.tickers = this.tickers.filter((t) => t !== tickerToRemove)
-      if (this.selectedTicker === tickerToRemove) {
-        this.selectedTicker = null
-      }
+      this.helpTickers = []
+      subscribeToTicker(currentTicker.name, (newPrice) =>
+        this.updateTicker(currentTicker.name, newPrice)
+      )
     },
 
     select(item) {
       this.selectedTicker = item
+    },
+
+    handleDelete(tickerToRemove) {
+      this.tickers = this.tickers.filter((t) => t !== tickerToRemove)
+      if (this.selectedTicker === tickerToRemove) {
+        this.selectedTicker = null
+      }
+      unsubscribeFromTicker(tickerToRemove.name)
     },
 
     handleTickerInput(event) {
