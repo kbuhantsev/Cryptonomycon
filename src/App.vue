@@ -130,7 +130,7 @@
           <h3 class="text-lg leading-6 font-medium text-gray-900 my-8">
             {{ selectedTicker.name }} - USD
           </h3>
-          <div class="flex items-end border-gray-600 border-b border-l h-64">
+          <div ref="graph" class="flex items-end border-gray-600 border-b border-l h-64">
             <div
               v-for="(bar, idx) in normalizedGraph"
               :key="idx"
@@ -178,6 +178,7 @@ export default {
       selectedTicker: null,
 
       graph: [],
+      maxGraphElements: 1,
 
       coins: [],
       helpTickers: [],
@@ -194,8 +195,14 @@ export default {
       this.coins = Object.values(result.Data)
     }
     getCoins()
+    window.addEventListener('resize', this.calculateMaxGraphElements)
   },
 
+  beforeUnmount() {
+    window.removeEventListener('resize', this.calculateMaxGraphElements)
+  },
+
+  //До того как страница отрисована
   created() {
     const windowData = Object.fromEntries(new URL(window.location).searchParams.entries())
 
@@ -219,6 +226,7 @@ export default {
     setInterval(this.updateTickers, 5000)
   },
 
+  //Все что не меняет данные + кэшируется
   computed: {
     startIndex() {
       return (this.page - 1) * 6
@@ -262,6 +270,13 @@ export default {
   },
 
   methods: {
+    calculateMaxGraphElements() {
+      if (!this.$refs.graph) {
+        return
+      }
+      this.maxGraphElements = this.$refs.graph.clientWidth / 38
+    },
+
     formatPrice(price) {
       if (price === '-') {
         return price
@@ -276,8 +291,8 @@ export default {
           if (t === this.selectedTicker) {
             this.graph.push(price)
           }
-          if (this.graph.length > 50) {
-            this.graph.shift()
+          if (this.graph.length > this.maxGraphElements) {
+            this.graph = this.graph.slice(-this.maxGraphElements)
           }
           t.price = this.formatPrice(price)
         })
@@ -349,6 +364,7 @@ export default {
 
     selectedTicker() {
       this.graph = []
+      this.$nextTick().then(this.calculateMaxGraphElements)
     },
 
     paginatedTickers() {
