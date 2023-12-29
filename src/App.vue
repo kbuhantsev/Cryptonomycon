@@ -10,7 +10,7 @@
       </svg>
     </div> -->
     <div class="container">
-      <add-ticker />
+      <add-ticker @add-ticker="add" />
       <template v-if="tickers.length">
         <div class="max-w-xs">
           Фильтр:
@@ -131,9 +131,9 @@ export default {
       graph: [],
       maxGraphElements: 1,
 
-      coins: [],
-      helpTickers: [],
-      helpTickersError: false,
+      // coins: [],
+      // helpTickers: [],
+      // helpTickersError: false,
 
       page: 1
     }
@@ -249,25 +249,25 @@ export default {
         })
     },
 
-    add(title) {
+    add(ticker) {
       const currentTicker = {
-        name: title ? title : this.ticker,
+        name: ticker,
         price: '-',
         intervalId: null
       }
 
-      const founded = this.coins.find((coin) => {
-        return coin.Symbol.toLowerCase() === currentTicker.name.toLowerCase()
-      })
-      if (!founded) {
-        alert('No such coin!')
-        return
-      }
+      // const founded = this.coins.find((coin) => {
+      //   return coin.Symbol.toLowerCase() === currentTicker.name.toLowerCase()
+      // })
+      // if (!founded) {
+      //   alert('No such coin!')
+      //   return
+      // }
 
       this.tickers = [...this.tickers, currentTicker]
       this.ticker = ''
       this.filter = ''
-      this.helpTickers = []
+      // this.helpTickers = []
       subscribeToTicker(currentTicker.name, (newPrice) =>
         this.updateTicker(currentTicker.name, newPrice)
       )
@@ -283,29 +283,29 @@ export default {
         this.selectedTicker = null
       }
       unsubscribeFromTicker(tickerToRemove.name)
-    },
-
-    handleTickerInput(event) {
-      this.helpTickersError = false
-      const inputData = event.target.value.toLowerCase()
-      if (inputData.length === 0) {
-        this.helpTickers = []
-        return
-      }
-      const values = this.coins.filter((obj) => obj.Symbol.toLowerCase().includes(inputData))
-      this.helpTickers = values.slice(0, 4)
-    },
-
-    handleHelpTickerClick(coin) {
-      const ticker = this.tickers.find(
-        (value) => value.name.toLowerCase() === coin.Symbol.toLowerCase()
-      )
-      if (ticker) {
-        this.helpTickersError = true
-      } else {
-        this.add(coin.Symbol)
-      }
     }
+
+    // handleTickerInput(event) {
+    //   this.helpTickersError = false
+    //   const inputData = event.target.value.toLowerCase()
+    //   if (inputData.length === 0) {
+    //     this.helpTickers = []
+    //     return
+    //   }
+    //   const values = this.coins.filter((obj) => obj.Symbol.toLowerCase().includes(inputData))
+    //   this.helpTickers = values.slice(0, 4)
+    // }
+
+    // handleHelpTickerClick(coin) {
+    //   const ticker = this.tickers.find(
+    //     (value) => value.name.toLowerCase() === coin.Symbol.toLowerCase()
+    //   )
+    //   if (ticker) {
+    //     this.helpTickersError = true
+    //   } else {
+    //     this.add(coin.Symbol)
+    //   }
+    // }
   },
 
   watch: {

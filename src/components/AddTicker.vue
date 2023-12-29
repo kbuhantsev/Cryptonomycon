@@ -48,7 +48,8 @@ export default {
     return {
       ticker: '',
       coins: [],
-      helpTickers: []
+      helpTickers: [],
+      helpTickersError: false
     }
   },
 
@@ -80,6 +81,30 @@ export default {
       this.$emit('add-ticker', this.ticker)
       this.ticker = ''
       this.helpTickers = []
+    },
+
+    handleTickerInput(event) {
+      this.helpTickersError = false
+      const inputData = event.target.value.toLowerCase()
+      if (inputData.length === 0) {
+        this.helpTickers = []
+        return
+      }
+      const values = this.coins.filter((obj) => obj.Symbol.toLowerCase().includes(inputData))
+      this.helpTickers = values.slice(0, 4)
+    },
+
+    handleHelpTickerClick(coin) {
+      //   const ticker = this.tickers.find(
+      //     (value) => value.name.toLowerCase() === coin.Symbol.toLowerCase()
+      //   )
+      //   if (ticker) {
+      //     this.helpTickersError = true
+      //   } else {
+      //     this.add(coin.Symbol)
+      //   }
+      this.ticker = coin.Symbol
+      this.add()
     }
   }
 }
