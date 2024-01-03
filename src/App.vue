@@ -10,7 +10,7 @@
       </svg>
     </div> -->
     <div class="container">
-      <add-ticker @add-ticker="add" />
+      <add-ticker @add-ticker="add" v-bind:disabled="tooManyTickersAdded" />
       <template v-if="tickers.length">
         <div class="max-w-xs">
           Фильтр:
@@ -131,10 +131,6 @@ export default {
       graph: [],
       maxGraphElements: 1,
 
-      // coins: [],
-      // helpTickers: [],
-      // helpTickersError: false,
-
       page: 1
     }
   },
@@ -165,7 +161,7 @@ export default {
       }
     })
 
-    const tickersData = localStorage.getItem('cryptonomicon-list')
+    const tickersData = localStorage.getItem('cryptonomicon_list')
 
     if (tickersData) {
       this.tickers = JSON.parse(tickersData)
@@ -174,7 +170,7 @@ export default {
       })
     }
 
-    setInterval(this.updateTickers, 5000)
+    setInterval(this.updateTicker, 5000)
   },
 
   //Все что не меняет данные + кэшируется
@@ -217,6 +213,10 @@ export default {
         filter: this.filter,
         page: this.page
       }
+    },
+
+    tooManyTickersAdded() {
+      return this.tickers.length > 4
     }
   },
 
@@ -256,18 +256,17 @@ export default {
         intervalId: null
       }
 
-      // const founded = this.coins.find((coin) => {
-      //   return coin.Symbol.toLowerCase() === currentTicker.name.toLowerCase()
-      // })
-      // if (!founded) {
-      //   alert('No such coin!')
-      //   return
-      // }
+      const founded = this.tickers.find(
+        (ticker) => ticker.name.toLowerCase() === currentTicker.name.toLowerCase()
+      )
+      if (founded) {
+        alert('Ticker already exists!')
+        return
+      }
 
       this.tickers = [...this.tickers, currentTicker]
       this.ticker = ''
       this.filter = ''
-      // this.helpTickers = []
       subscribeToTicker(currentTicker.name, (newPrice) =>
         this.updateTicker(currentTicker.name, newPrice)
       )
@@ -284,28 +283,6 @@ export default {
       }
       unsubscribeFromTicker(tickerToRemove.name)
     }
-
-    // handleTickerInput(event) {
-    //   this.helpTickersError = false
-    //   const inputData = event.target.value.toLowerCase()
-    //   if (inputData.length === 0) {
-    //     this.helpTickers = []
-    //     return
-    //   }
-    //   const values = this.coins.filter((obj) => obj.Symbol.toLowerCase().includes(inputData))
-    //   this.helpTickers = values.slice(0, 4)
-    // }
-
-    // handleHelpTickerClick(coin) {
-    //   const ticker = this.tickers.find(
-    //     (value) => value.name.toLowerCase() === coin.Symbol.toLowerCase()
-    //   )
-    //   if (ticker) {
-    //     this.helpTickersError = true
-    //   } else {
-    //     this.add(coin.Symbol)
-    //   }
-    // }
   },
 
   watch: {
